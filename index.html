@@ -78,7 +78,7 @@
             resultDiv.innerText = 'Verifying ' + decodedText + '...';
 
             // Ping the Google Sheet API
-            fetch(`${APPS_SCRIPT_URL}?action=scan&regNo=${encodeURIComponent(decodedText)}`)
+            fetch(`${APPS_SCRIPT_URL}?action=scan&regNo=${encodeURIComponent(decodedText)}`, { redirect: "follow" })
                 .then(response => response.json())
                 .then(data => {
                     resultDiv.className = data.success ? 'success' : 'error';
