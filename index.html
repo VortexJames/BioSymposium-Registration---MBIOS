@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBIOSymposium Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: #111;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h2 {
+            color: #81c784;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #222;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .success {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .loading {
+            background-color: #ffb300;
+            color: #111;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>MBIOSymposium Check-In</h2>
+    <div id="reader"></div>
+    <div id="result"></div>
+
+    <script>
+        // --- PASTE YOUR APPS SCRIPT URL BELOW ---
+        const APPS_SCRIPT_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE";
+
+        let html5QrcodeScanner;
+        let isProcessing = false;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'loading';
+            resultDiv.innerText = 'Verifying ' + decodedText + '...';
+
+            // Ping the Google Sheet API
+            fetch(`${APPS_SCRIPT_URL}?action=scan&regNo=${encodeURIComponent(decodedText)}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultDiv.className = data.success ? 'success' : 'error';
+                    resultDiv.innerText = data.message;
+                    setTimeout(() => {
+                        resultDiv.style.display = 'none';
+                        isProcessing = false;
+                    }, 3000);
+                })
+                .catch(error => {
+                    resultDiv.className = 'error';
+                    resultDiv.innerText = 'Network error. Try again.';
+                    setTimeout(() => {
+                        resultDiv.style.display = 'none';
+                        isProcessing = false;
+                    }, 3000);
+                });
+        }
+
+        window.onload = function () {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+            html5QrcodeScanner.render(onScanSuccess);
+        };
+    </script>
+</body>
+
+</html>
